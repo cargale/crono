@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PACE / TRACK</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080a0d;
+  --card: #0f1217;
+  --border: #1a1f28;
+  --accent: #d4f542;
+  --text: #f0f2f5;
+  --muted: #4a5260;
+  --green: #00ff88;
+  --red: #ff2d55;
+  --amber: #ffcc00;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow-x: hidden; font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); transition: background 0.6s ease; }
+
+.page { display: none; min-height: 100vh; flex-direction: column; }
+.page.active { display: flex; }
+
+/* ── PAGE 1: SETUP ── */
+#pageSetup { padding: max(env(safe-area-inset-top),1.2rem) 1.25rem 2rem; gap: 0; background: var(--bg); }
+
+.setup-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0 1.4rem; border-bottom: 1px solid var(--border); margin-bottom: 1.4rem; }
+.logo-text { font-family: 'Bebas Neue', cursive; font-size: 2.4rem; letter-spacing: 0.04em; color: var(--accent); line-height:1; text-shadow: 0 0 30px rgba(212,245,66,0.4); }
+.logo-text span { color: var(--muted); }
+.setup-tag { font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); background: var(--card); border: 1px solid var(--border); padding: 0.3rem 0.6rem; border-radius: 4px; }
+
+.setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem; margin-bottom: 1rem; position: relative; overflow: hidden; }
+.setup-card::after { content:''; position:absolute; top:0; left:0; right:0; height:1px; background: linear-gradient(90deg,var(--accent),transparent); opacity:0.5; }
+
+.card-label { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.9rem; }
+
+.input-group { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.num-field { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.num-field small { font-size: 0.55rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+input[type="number"] { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Bebas Neue', cursive; font-size: 2rem; letter-spacing: 0.05em; padding: 0.5rem; width: 72px; text-align: center; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(212,245,66,0.15); }
+
+.sep { font-family: 'Bebas Neue', cursive; font-size: 2rem; color: var(--muted); margin-top: -0.5rem; }
+.unit-tag { font-size: 0.7rem; color: var(--muted); margin-left: 0.2rem; }
+
+.lap-options { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.lap-btn { flex:1; min-width: 56px; padding: 0.55rem 0.4rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-family: 'Bebas Neue', cursive; font-size: 1rem; letter-spacing: 0.06em; cursor: pointer; text-align: center; transition: all 0.15s; }
+.lap-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(212,245,66,0.07); }
+
+.btn-go { width:100%; padding:1.1rem; background: var(--accent); color:#000; border:none; border-radius:16px; font-family:'Bebas Neue',cursive; font-size:1.5rem; letter-spacing:0.12em; cursor:pointer; margin-top:0.5rem; position:relative; overflow:hidden; transition: transform 0.15s, box-shadow 0.2s; }
+.btn-go:active { transform: scale(0.97); }
+.btn-go::after { content:''; position:absolute; inset:0; background: linear-gradient(135deg,rgba(255,255,255,0.15) 0%,transparent 50%); }
+
+.splits-preview { display:none; flex-direction:column; gap:0; margin-top:0.5rem; }
+.splits-preview.show { display:flex; }
+.splits-header-row { display:grid; grid-template-columns:1.2fr 1fr 1.4fr 1.4fr; padding:0.4rem 0.8rem; font-size:0.55rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); }
+.split-row { display:grid; grid-template-columns:1.2fr 1fr 1.4fr 1.4fr; padding:0.6rem 0.8rem; font-size:0.85rem; border-bottom:1px solid rgba(26,31,40,0.5); align-items:center; }
+.split-row:last-child { border-bottom:none; }
+.sr-lap { font-family:'Bebas Neue',cursive; font-size:1rem; color:var(--muted); }
+.sr-dist { color:var(--accent); font-size:0.8rem; }
+.sr-time { color:var(--text); }
+.sr-cum { color:var(--muted); font-size:0.78rem; }
+.total-row { display:flex; justify-content:space-between; padding:0.65rem 0.8rem; border-top:1px solid var(--border); margin-top:0.2rem; }
+.total-row span:first-child { font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
+.total-row span:last-child { font-family:'Bebas Neue',cursive; font-size:1.1rem; color:var(--accent); }
+
+/* ── PAGE 2: CHRONO ── */
+#pageChrono { flex-direction:column; transition: background 0.5s ease; min-height:100vh; position:relative; overflow:hidden; }
+.chrono-glow { position:fixed; inset:0; pointer-events:none; z-index:0; transition: background 0.5s ease; }
+.lap-flash { position:fixed; inset:0; pointer-events:none; z-index:10; opacity:0; transition: opacity 0.08s; }
+.chrono-content { position:relative; z-index:2; display:flex; flex-direction:column; flex:1; padding: max(env(safe-area-inset-top),0.8rem) 1.25rem max(env(safe-area-inset-bottom),0.8rem); }
+
+.chrono-topbar { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0 0.8rem; }
+.btn-back { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); background:none; border:1px solid var(--border); border-radius:8px; padding:0.4rem 0.8rem; cursor:pointer; }
+.chrono-status-badge { font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; padding:0.3rem 0.8rem; border-radius:20px; border:1px solid var(--border); color:var(--muted); transition:all 0.3s; }
+.chrono-status-badge.running { color:var(--green); border-color:var(--green); background:rgba(0,255,136,0.08); animation:sPulse 2s ease-in-out infinite; }
+.chrono-status-badge.paused { color:var(--amber); border-color:var(--amber); }
+@keyframes sPulse { 0%,100% { box-shadow:0 0 0 0 rgba(0,255,136,0.3); } 50% { box-shadow:0 0 0 5px rgba(0,255,136,0); } }
+
+.state-indicator { text-align:center; padding:0.2rem 0 0; }
+.state-label { font-size:0.62rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:0.15rem; transition:color 0.4s; }
+.state-value { font-family:'Bebas Neue',cursive; font-size:clamp(1.2rem,5vw,1.8rem); letter-spacing:0.08em; transition:color 0.4s; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+
+.clock-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0.2rem 0; }
+.clock-main { font-family:'Bebas Neue',cursive; font-size:clamp(5rem,22vw,8.5rem); letter-spacing:0.02em; line-height:0.9; text-align:center; transition:color 0.4s, text-shadow 0.4s; color:var(--text); text-shadow:0 0 60px rgba(240,242,245,0.06); }
+.clock-main.s-ahead { color:var(--green); text-shadow:0 0 80px rgba(0,255,136,0.5), 0 0 160px rgba(0,255,136,0.18); }
+.clock-main.s-behind { color:var(--red); text-shadow:0 0 80px rgba(255,45,85,0.5), 0 0 160px rgba(255,45,85,0.18); }
+.clock-main.s-ok { color:var(--amber); text-shadow:0 0 60px rgba(255,204,0,0.35); }
+
+.clock-centis { font-family:'Bebas Neue',cursive; font-size:clamp(1.6rem,7vw,2.8rem); letter-spacing:0.06em; color:var(--muted); margin-top:-0.1rem; text-align:center; transition:color 0.4s; }
+
+.diff-display { margin-top:0.6rem; text-align:center; min-height:2.4rem; display:flex; align-items:center; justify-content:center; }
+.diff-value { font-family:'Bebas Neue',cursive; font-size:clamp(1.8rem,8vw,3rem); letter-spacing:0.06em; transition:all 0.4s; opacity:0; }
+.diff-value.show { opacity:1; }
+.diff-value.c-ahead { color:var(--green); }
+.diff-value.c-behind { color:var(--red); }
+.diff-value.c-ok { color:var(--amber); }
+
+.diff-label { font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); text-align:center; min-height:1rem; transition:color 0.4s; margin-bottom:0.4rem; }
+
+.arc-wrap { position:relative; width:140px; height:75px; margin:0.3rem auto 0; }
+.arc-svg { width:140px; height:80px; overflow:visible; }
+.arc-bg { fill:none; stroke:var(--border); stroke-width:5; stroke-linecap:round; }
+.arc-fill { fill:none; stroke:var(--accent); stroke-width:5; stroke-linecap:round; transition:stroke-dashoffset 0.3s linear, stroke 0.4s; }
+.arc-label { text-anchor:middle; font-family:'DM Mono',monospace; font-size:8px; fill:var(--muted); }
+.arc-pct { text-anchor:middle; font-family:'Bebas Neue',cursive; font-size:20px; fill:var(--text); transition:fill 0.4s; }
+
+.lap-info-bar { display:flex; justify-content:space-between; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:0.65rem 0.9rem; margin-bottom:0.75rem; transition:border-color 0.4s; }
+.lap-info-bar.b-ahead { border-color:rgba(0,255,136,0.3); }
+.lap-info-bar.b-behind { border-color:rgba(255,45,85,0.3); }
+.lib-item { display:flex; flex-direction:column; align-items:center; gap:0.15rem; }
+.lib-item span:first-child { font-size:0.5rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
+.lib-item span:last-child { font-family:'Bebas Neue',cursive; font-size:1.15rem; letter-spacing:0.05em; color:var(--text); transition:color 0.3s; }
+.lib-item span.c-green { color:var(--green); }
+.lib-item span.c-red { color:var(--red); }
+.lib-item span.c-amber { color:var(--amber); }
+.lib-item span.c-accent { color:var(--accent); }
+.lib-div { width:1px; height:28px; background:var(--border); }
+
+.chrono-controls { display:grid; grid-template-columns:1fr 2fr 1fr; gap:0.65rem; margin-bottom:0.75rem; }
+.btn-ctrl { border-radius:16px; border:1px solid var(--border); font-family:'Bebas Neue',cursive; font-size:1.1rem; letter-spacing:0.1em; cursor:pointer; padding:1.1rem 0; transition:all 0.15s; background:var(--card); color:var(--text); -webkit-user-select:none; user-select:none; }
+.btn-ctrl:active { transform:scale(0.95); }
+.btn-main { font-size:1.5rem; background:var(--green); color:#000; border-color:var(--green); box-shadow:0 0 30px rgba(0,255,136,0.25); }
+.btn-main.paused { background:var(--amber); border-color:var(--amber); box-shadow:0 0 30px rgba(255,204,0,0.25); color:#000; }
+.btn-lap:not(:disabled):hover { border-color:var(--accent); color:var(--accent); }
+.btn-lap:disabled { opacity:0.22; }
+.btn-reset { color:var(--muted); }
+
+.summary-bar { display:none; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem; }
+.sum-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:0.75rem 0.5rem; text-align:center; }
+.sum-card span:first-child { display:block; font-size:0.52rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.25rem; }
+.sv { font-family:'Bebas Neue',cursive; font-size:1.15rem; letter-spacing:0.04em; display:block; }
+.sv.green { color:var(--green); }
+.sv.red { color:var(--red); }
+.sv.neutral { color:var(--text); }
+
+.laps-section { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+.laps-section-header { display:grid; grid-template-columns:0.5fr 1.2fr 1.2fr 1.1fr 1.1fr; padding:0.45rem 0.9rem; font-size:0.52rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); background:rgba(0,0,0,0.25); }
+.laps-body { max-height:190px; overflow-y:auto; }
+.laps-body::-webkit-scrollbar { width:3px; }
+.laps-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.lap-history-row { display:grid; grid-template-columns:0.5fr 1.2fr 1.2fr 1.1fr 1.1fr; padding:0.6rem 0.9rem; font-size:0.8rem; border-bottom:1px solid rgba(26,31,40,0.5); align-items:center; animation:rowIn 0.3s ease-out; }
+.lap-history-row:last-child { border-bottom:none; }
+@keyframes rowIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+.lhr-n { font-family:'Bebas Neue',cursive; font-size:0.95rem; color:var(--muted); }
+.lhr-t { color:var(--text); }
+.lhr-tgt { color:var(--muted); font-size:0.74rem; }
+.pill { display:inline-block; padding:0.1rem 0.42rem; border-radius:4px; font-size:0.7rem; }
+.p-ahead { background:rgba(0,255,136,0.12); color:var(--green); }
+.p-behind { background:rgba(255,45,85,0.12); color:var(--red); }
+.p-ok { background:rgba(255,204,0,0.12); color:var(--amber); }
+.no-laps { text-align:center; padding:1.4rem; font-size:0.7rem; letter-spacing:0.1em; color:var(--muted); }
+
+/* Body state classes */
+body.is-ahead { background: #010d06 !important; }
+body.is-behind { background: #0d0103 !important; }
+body.is-ok { background: #0a0800 !important; }
+</style>
+</head>
+<body>
+
+<!-- ══ PAGE 1: SETUP ══ -->
+<div id="pageSetup" class="page active">
+  <div class="setup-header">
+    <div class="logo-text">PACE<span>/</span>TRACK</div>
+    <div class="setup-tag">Pista Atletismo</div>
+  </div>
+
+  <div class="setup-card">
+    <div class="card-label">Distancia total</div>
+    <div class="input-group">
+      <div class="num-field">
+        <input type="number" id="distance" value="2000" min="400" max="42195">
+        <small>metros</small>
+      </div>
+    </div>
+    <div class="card-label" style="margin-top:1rem;margin-bottom:0.5rem;">Largo de vuelta</div>
+    <div class="lap-options" id="lapOptions">
+      <div class="lap-btn active" data-len="400" onclick="setLap(this)">400m</div>
+      <div class="lap-btn" data-len="300" onclick="setLap(this)">300m</div>
+      <div class="lap-btn" data-len="200" onclick="setLap(this)">200m</div>
+      <div class="lap-btn" data-len="500" onclick="setLap(this)">500m</div>
+      <div class="lap-btn" data-len="1000" onclick="setLap(this)">1000m</div>
+    </div>
+  </div>
+
+  <div class="setup-card">
+    <div class="card-label">Ritmo objetivo (min:seg / km)</div>
+    <div class="input-group">
+      <div class="num-field">
+        <input type="number" id="paceMin" value="3" min="1" max="20">
+        <small>min</small>
+      </div>
+      <div class="sep">:</div>
+      <div class="num-field">
+        <input type="number" id="paceSec" value="30" min="0" max="59">
+        <small>seg</small>
+      </div>
+      <span class="unit-tag">/ km</span>
+    </div>
+  </div>
+
+  <div class="setup-card" style="padding-bottom:0.6rem;">
+    <div class="card-label">Plan de splits</div>
+    <div class="splits-preview" id="splitsPreview">
+      <div class="splits-header-row">
+        <span>Vuelta</span><span>Dist</span><span>Split</span><span>Acum.</span>
+      </div>
+      <div id="splitsRows"></div>
+      <div class="total-row">
+        <span>Tiempo total objetivo</span>
+        <span id="totalTimeLabel">—</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-go" onclick="goToChrono()">INICIAR CRONÓMETRO →</button>
+</div>
+
+<!-- ══ PAGE 2: CHRONO ══ -->
+<div id="pageChrono" class="page">
+  <div class="chrono-glow" id="chronoGlow"></div>
+  <div class="lap-flash" id="lapFlash"></div>
+
+  <div class="chrono-content">
+    <div class="chrono-topbar">
+      <button class="btn-back" onclick="goBack()">← VOLVER</button>
+      <div class="chrono-status-badge" id="statusBadge">EN ESPERA</div>
+    </div>
+
+    <div class="state-indicator">
+      <span class="state-label" id="stateLabel">Pulsa INICIAR para comenzar</span>
+      <div class="state-value">
+        <span id="stateIcon">⏱</span>
+        <span id="stateText">—</span>
+      </div>
+    </div>
+
+    <div class="clock-area">
+      <div class="clock-main" id="clockMain">00:00</div>
+      <div class="clock-centis" id="clockCentis">.00</div>
+      <div class="diff-display">
+        <div class="diff-value" id="diffValue">—</div>
+      </div>
+      <div class="diff-label" id="diffLabel">sin plan activo</div>
+      <div class="arc-wrap">
+        <svg class="arc-svg" viewBox="0 0 140 82">
+          <path class="arc-bg"  d="M 8,76 A 62,62 0 0,1 132,76" stroke-dasharray="195" stroke-dashoffset="0"/>
+          <path class="arc-fill" id="arcFill" d="M 8,76 A 62,62 0 0,1 132,76" stroke-dasharray="195" stroke-dashoffset="195"/>
+          <text class="arc-pct" id="arcPct" x="70" y="64">0%</text>
+          <text class="arc-label" x="70" y="79">VUELTA ACTUAL</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="lap-info-bar" id="lapInfoBar">
+      <div class="lib-item">
+        <span>Vuelta</span>
+        <span id="libLapNum" class="c-accent">—</span>
+      </div>
+      <div class="lib-div"></div>
+      <div class="lib-item">
+        <span>Obj. vuelta</span>
+        <span id="libTarget">—</span>
+      </div>
+      <div class="lib-div"></div>
+      <div class="lib-item">
+        <span>Parcial</span>
+        <span id="libCurrent">—</span>
+      </div>
+      <div class="lib-div"></div>
+      <div class="lib-item">
+        <span>Dif.</span>
+        <span id="libDiff">—</span>
+      </div>
+    </div>
+
+    <div class="chrono-controls">
+      <button class="btn-ctrl btn-reset" onclick="resetChrono()">RESET</button>
+      <button class="btn-ctrl btn-main" id="btnMain" onclick="toggleStart()">INICIAR</button>
+      <button class="btn-ctrl btn-lap" id="btnLap" onclick="recordLap()" disabled>LAP</button>
+    </div>
+
+    <div class="summary-bar" id="summaryBar">
+      <div class="sum-card"><span>Tiempo</span><span class="sv neutral" id="sumFinal">—</span></div>
+      <div class="sum-card"><span>Objetivo</span><span class="sv neutral" id="sumTarget">—</span></div>
+      <div class="sum-card"><span>Balance</span><span class="sv neutral" id="sumBalance">—</span></div>
+    </div>
+
+    <div class="laps-section" id="lapsSection">
+      <div class="laps-section-header">
+        <span>#</span><span>Vuelta</span><span>Obj.</span><span>Dif.</span><span>Acum.</span>
+      </div>
+      <div class="laps-body" id="lapsBody">
+        <div class="no-laps" id="noLaps">— Sin vueltas registradas —</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── AUDIO ENGINE ──────────────────────────────────────────────────────────
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playTone(freq, dur, type='sine', vol=0.4) {
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + dur);
+  } catch(e){}
+}
+function soundStart() {
+  playTone(440,0.1,'sine',0.3);
+  setTimeout(()=>playTone(660,0.14,'sine',0.35),120);
+  setTimeout(()=>playTone(880,0.2,'sine',0.4),260);
+}
+function soundLapAhead() {
+  playTone(880,0.12,'sine',0.5);
+  setTimeout(()=>playTone(1100,0.18,'sine',0.4),140);
+}
+function soundLapBehind() {
+  playTone(330,0.18,'square',0.35);
+  setTimeout(()=>playTone(260,0.25,'square',0.3),200);
+}
+function soundLapOk() {
+  playTone(660,0.14,'sine',0.4);
+  setTimeout(()=>playTone(660,0.12,'sine',0.3),170);
+}
+function soundFinish() {
+  [880,1100,880,660,880].forEach((f,i)=>setTimeout(()=>playTone(f,0.15,'sine',0.5),i*120));
+}
+function soundPause() { playTone(440,0.3,'sine',0.25); }
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let splits = [], totalTargetMs = 0, lapLengthM = 400;
+let running = false, startTime = 0, elapsed = 0, rafId = null;
+let lapTimes = [], lapStartMs = 0, currentLapIdx = 0;
+let lastState = 'neutral';
+
+// ── SETUP ─────────────────────────────────────────────────────────────────
+function setLap(el) {
+  document.querySelectorAll('.lap-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  lapLengthM = parseInt(el.dataset.len);
+  buildSplits();
+}
+
+function buildSplits() {
+  const distance = parseInt(document.getElementById('distance').value)||2000;
+  const lapLen   = lapLengthM;
+  const pMin     = parseInt(document.getElementById('paceMin').value)||3;
+  const pSec     = parseInt(document.getElementById('paceSec').value)||30;
+  const pacePerM = (pMin*60+pSec)*1000/1000;
+  const numFull  = Math.floor(distance/lapLen);
+  const rem      = distance%lapLen;
+  splits=[]; let cumMs=0;
+  for(let i=0;i<numFull;i++){
+    const sMs=lapLen*pacePerM; cumMs+=sMs;
+    splits.push({lap:i+1,distance:(i+1)*lapLen,partial:lapLen,split_ms:sMs,cumulative_ms:cumMs});
+  }
+  if(rem>0){
+    const sMs=rem*pacePerM; cumMs+=sMs;
+    splits.push({lap:numFull+1,distance:distance,partial:rem,split_ms:sMs,cumulative_ms:cumMs});
+  }
+  totalTargetMs=cumMs;
+  renderSplitsPreview();
+}
+
+function renderSplitsPreview() {
+  const rows=document.getElementById('splitsRows');
+  rows.innerHTML='';
+  splits.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='split-row';
+    d.innerHTML=`<span class="sr-lap">${s.lap}</span><span class="sr-dist">${s.partial}m</span><span class="sr-time">${fmt(s.split_ms)}</span><span class="sr-cum">${fmt(s.cumulative_ms)}</span>`;
+    rows.appendChild(d);
+  });
+  document.getElementById('totalTimeLabel').textContent=fmt(totalTargetMs);
+  document.getElementById('splitsPreview').classList.add('show');
+}
+
+['distance','paceMin','paceSec'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',buildSplits);
+  el.addEventListener('change',buildSplits);
+});
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+function goToChrono() {
+  ensureAudio(); buildSplits();
+  document.getElementById('pageSetup').classList.remove('active');
+  document.getElementById('pageChrono').classList.add('active');
+  document.getElementById('sumTarget').textContent=splits.length>0?fmt(totalTargetMs):'—';
+  updateLapBar();
+}
+function goBack() {
+  if(running){running=false;cancelAnimationFrame(rafId);}
+  document.getElementById('pageChrono').classList.remove('active');
+  document.getElementById('pageSetup').classList.add('active');
+}
+
+// ── CHRONO ────────────────────────────────────────────────────────────────
+function toggleStart() {
+  ensureAudio();
+  if(!running){
+    startTime=performance.now()-elapsed;
+    running=true;
+    // Only reset lapStartMs on very first start (elapsed===0)
+    if(elapsed===0) lapStartMs=0;
+    rafId=requestAnimationFrame(tick);
+    document.getElementById('btnMain').textContent='PAUSA';
+    document.getElementById('btnMain').classList.add('paused');
+    document.getElementById('btnLap').disabled=false;
+    document.getElementById('statusBadge').textContent='EN MARCHA';
+    document.getElementById('statusBadge').className='chrono-status-badge running';
+    soundStart();
+  } else {
+    running=false; cancelAnimationFrame(rafId);
+    document.getElementById('btnMain').textContent='REANUDAR';
+    document.getElementById('btnMain').classList.remove('paused');
+    document.getElementById('statusBadge').textContent='PAUSADO';
+    document.getElementById('statusBadge').className='chrono-status-badge paused';
+    soundPause();
+  }
+}
+
+function tick(ts) {
+  elapsed=ts-startTime;
+  renderChrono();
+  if(running) rafId=requestAnimationFrame(tick);
+}
+
+function renderChrono() {
+  const ms=elapsed;
+  const mins=Math.floor(ms/60000);
+  const secs=Math.floor((ms%60000)/1000);
+  const centi=Math.floor((ms%1000)/10);
+  document.getElementById('clockMain').textContent=`${pad2(mins)}:${pad2(secs)}`;
+  document.getElementById('clockCentis').textContent=`.${pad2(centi)}`;
+
+  // State detection
+  let state='neutral';
+  // lapElapsed = time spent in the current lap so far
+  const lapElapsedMs = ms - lapStartMs;
+  if(splits.length>0 && currentLapIdx<splits.length){
+    // Compare partial lap time vs partial lap target
+    const lapTarget=splits[currentLapIdx].split_ms;
+    const diff=lapElapsedMs-lapTarget;
+    state=Math.abs(diff)<=600?'ok':diff<0?'ahead':'behind';
+
+    // Diff text
+    const dv=document.getElementById('diffValue');
+    dv.classList.add('show');
+    dv.textContent=diffStr(diff);
+    dv.className=`diff-value show c-${state==='ahead'?'ahead':state==='behind'?'behind':'ok'}`;
+    const dl=document.getElementById('diffLabel');
+    dl.textContent=diff<0?'▲ VAS POR DELANTE':diff>0?'▼ VAS POR DETRÁS':'● EN RITMO';
+    dl.style.color=state==='ahead'?'var(--green)':state==='behind'?'var(--red)':'var(--amber)';
+  } else if(splits.length===0){
+    document.getElementById('diffValue').classList.remove('show');
+    document.getElementById('diffLabel').textContent='sin plan activo';
+    document.getElementById('diffLabel').style.color='';
+  }
+
+  // Clock colour
+  const cl=document.getElementById('clockMain');
+  cl.className=`clock-main${state==='ahead'?' s-ahead':state==='behind'?' s-behind':state==='ok'?' s-ok':''}`;
+
+  // Body bg
+  if(state!==lastState && splits.length>0){
+    document.body.classList.remove('is-ahead','is-behind','is-ok');
+    if(state==='ahead') document.body.classList.add('is-ahead');
+    else if(state==='behind') document.body.classList.add('is-behind');
+    else if(state==='ok') document.body.classList.add('is-ok');
+
+    // Glow
+    const glow=document.getElementById('chronoGlow');
+    if(state==='ahead') glow.style.background='radial-gradient(ellipse at 50% 20%, rgba(0,255,136,0.1) 0%, transparent 65%)';
+    else if(state==='behind') glow.style.background='radial-gradient(ellipse at 50% 20%, rgba(255,45,85,0.1) 0%, transparent 65%)';
+    else if(state==='ok') glow.style.background='radial-gradient(ellipse at 50% 20%, rgba(255,204,0,0.08) 0%, transparent 65%)';
+    else glow.style.background='none';
+
+    lastState=state;
+  }
+
+  // State label
+  if(splits.length>0 && currentLapIdx<splits.length){
+    const s=splits[currentLapIdx];
+    document.getElementById('stateLabel').textContent=`Vuelta ${s.lap} de ${splits.length} · ${s.partial}m`;
+    const icons={ahead:'🟢',behind:'🔴',ok:'🟡',neutral:'⏱'};
+    const texts={ahead:'POR DELANTE',behind:'POR DETRÁS',ok:'EN RITMO',neutral:'—'};
+    const colors={ahead:'var(--green)',behind:'var(--red)',ok:'var(--amber)',neutral:'var(--text)'};
+    document.getElementById('stateIcon').textContent=icons[state]||'⏱';
+    document.getElementById('stateText').textContent=texts[state]||'—';
+    document.getElementById('stateText').style.color=colors[state]||'';
+  }
+
+  // Arc
+  if(splits.length>0 && currentLapIdx<splits.length){
+    const lapTgt=splits[currentLapIdx].split_ms;
+    const pct=Math.min(lapElapsedMs/lapTgt,1);
+    const arcFill=document.getElementById('arcFill');
+    arcFill.style.strokeDashoffset=195-(195*pct);
+    const sc=state==='ahead'?'var(--green)':state==='behind'?'var(--red)':'var(--amber)';
+    arcFill.style.stroke=sc;
+    document.getElementById('arcPct').textContent=Math.round(pct*100)+'%';
+    document.getElementById('arcPct').style.fill=sc;
+  }
+
+  // Info bar live
+  document.getElementById('libCurrent').textContent=fmt(lapElapsedMs);
+  if(splits.length>0 && currentLapIdx<splits.length){
+    const lapDiff=lapElapsedMs-splits[currentLapIdx].split_ms;
+    const ld=document.getElementById('libDiff');
+    ld.textContent=Math.abs(lapDiff)<300?'±0':diffStr(lapDiff);
+    ld.className=lapDiff<-300?'c-green':lapDiff>300?'c-red':'c-amber';
+  }
+}
+
+// ── RECORD LAP ────────────────────────────────────────────────────────────
+function recordLap() {
+  if(!running) return;
+  ensureAudio();
+  const lapEndMs=elapsed, lapMs=lapEndMs-lapStartMs;
+  const lapIdx=lapTimes.length;
+  let targetLap=null, targetCum=null;
+  if(splits.length>0 && lapIdx<splits.length){
+    targetLap=splits[lapIdx].split_ms; targetCum=splits[lapIdx].cumulative_ms;
+  }
+  const diff=targetLap!==null?lapMs-targetLap:null;
+  lapTimes.push({lap:lapIdx+1,lapMs,lapEndMs,targetLap,targetCum,partial:splits[lapIdx]?.partial||lapLengthM,diff});
+
+  // Sound
+  if(diff===null||Math.abs(diff)<=400) soundLapOk();
+  else if(diff<0) soundLapAhead();
+  else soundLapBehind();
+
+  // Flash
+  const fl=document.getElementById('lapFlash');
+  fl.style.background=diff===null||Math.abs(diff)<=400?'rgba(255,204,0,0.18)':diff<0?'rgba(0,255,136,0.22)':'rgba(255,45,85,0.22)';
+  fl.style.opacity='1';
+  setTimeout(()=>{fl.style.opacity='0';},280);
+
+  lapStartMs=lapEndMs; currentLapIdx++;
+  renderLapHistory(); updateLapBar();
+  document.getElementById('arcFill').style.strokeDashoffset=195;
+  document.getElementById('arcPct').textContent='0%';
+
+  if(splits.length>0 && currentLapIdx>=splits.length){
+    soundFinish();
+    document.getElementById('stateLabel').textContent='¡Distancia completada!';
+    document.getElementById('stateIcon').textContent='🏁';
+    document.getElementById('stateText').textContent='FIN';
+  }
+  updateSummary();
+}
+
+function renderLapHistory() {
+  const body=document.getElementById('lapsBody');
+  body.innerHTML='';
+  const noLapsEl=document.createElement('div');
+  noLapsEl.id='noLaps';
+  noLapsEl.className='no-laps';
+  noLapsEl.textContent='— Sin vueltas registradas —';
+  noLapsEl.style.display=lapTimes.length===0?'block':'none';
+  body.appendChild(noLapsEl);
+  if(lapTimes.length===0){document.getElementById('summaryBar').style.display='none';return;}
+  document.getElementById('summaryBar').style.display='grid';
+  [...lapTimes].reverse().forEach(l=>{
+    const d=document.createElement('div');
+    d.className='lap-history-row';
+    const pHtml=l.diff!==null
+      ?`<span class="pill ${l.diff<-400?'p-ahead':l.diff>400?'p-behind':'p-ok'}">${diffStr(l.diff)}</span>`
+      :'<span class="pill p-ok">—</span>';
+    d.innerHTML=`<span class="lhr-n">${l.lap}</span><span class="lhr-t">${fmt(l.lapMs)}</span><span class="lhr-tgt">${l.targetLap?fmt(l.targetLap):'—'}</span>${pHtml}<span class="lhr-tgt">${fmt(l.lapEndMs)}</span>`;
+    body.appendChild(d);
+  });
+}
+
+function updateLapBar() {
+  if(splits.length>0 && currentLapIdx<splits.length){
+    const s=splits[currentLapIdx];
+    document.getElementById('libLapNum').textContent=`${s.lap}/${splits.length}`;
+    document.getElementById('libTarget').textContent=fmt(s.split_ms);
+  } else {
+    document.getElementById('libLapNum').textContent='—';
+    document.getElementById('libTarget').textContent='—';
+  }
+}
+
+function updateSummary() {
+  if(lapTimes.length===0){document.getElementById('summaryBar').style.display='none';return;}
+  document.getElementById('summaryBar').style.display='grid';
+  const last=lapTimes[lapTimes.length-1];
+  const finalMs=last.lapEndMs;
+  const target=splits.length>0?totalTargetMs:null;
+  const balance=target!==null?finalMs-target:null;
+  document.getElementById('sumFinal').textContent=fmt(finalMs);
+  document.getElementById('sumTarget').textContent=target!==null?fmt(target):'—';
+  const be=document.getElementById('sumBalance');
+  if(balance===null){be.textContent='—';be.className='sv neutral';}
+  else if(balance<0){be.textContent=diffStr(balance);be.className='sv green';}
+  else if(balance>0){be.textContent=diffStr(balance);be.className='sv red';}
+  else{be.textContent='±0';be.className='sv neutral';}
+}
+
+function resetChrono() {
+  running=false; cancelAnimationFrame(rafId);
+  elapsed=0; lapTimes=[]; lapStartMs=0; currentLapIdx=0; lastState='neutral';
+  document.getElementById('clockMain').textContent='00:00';
+  document.getElementById('clockCentis').textContent='.00';
+  document.getElementById('clockMain').className='clock-main';
+  document.getElementById('btnMain').textContent='INICIAR';
+  document.getElementById('btnMain').classList.remove('paused');
+  document.getElementById('btnLap').disabled=true;
+  document.getElementById('statusBadge').textContent='EN ESPERA';
+  document.getElementById('statusBadge').className='chrono-status-badge';
+  document.getElementById('diffValue').classList.remove('show');
+  document.getElementById('diffLabel').textContent=splits.length>0?'esperando inicio':'sin plan activo';
+  document.getElementById('diffLabel').style.color='';
+  document.getElementById('stateLabel').textContent='Pulsa INICIAR para comenzar';
+  document.getElementById('stateText').textContent='—'; document.getElementById('stateText').style.color='';
+  document.getElementById('stateIcon').textContent='⏱';
+  document.getElementById('arcFill').style.strokeDashoffset=195;
+  document.getElementById('arcPct').textContent='0%';
+  document.getElementById('libCurrent').textContent='—';
+  document.getElementById('libDiff').textContent='—';
+  document.getElementById('libLapNum').textContent='—';
+  document.getElementById('libTarget').textContent='—';
+  document.getElementById('chronoGlow').style.background='none';
+  document.body.classList.remove('is-ahead','is-behind','is-ok');
+  document.getElementById('summaryBar').style.display='none';
+  document.getElementById('sumFinal').textContent='—';
+  document.getElementById('sumBalance').textContent='—';
+  document.getElementById('lapsBody').innerHTML='<div class="no-laps">— Sin vueltas registradas —</div>';
+  updateLapBar();
+  if(audioCtx) playTone(330,0.3,'sine',0.2);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────
+function fmt(ms) {
+  const s=ms/1000, m=Math.floor(s/60), sec=s%60;
+  return `${pad2(m)}:${sec<10?'0':''}${sec.toFixed(1)}`;
+}
+function diffStr(ms) {
+  const sign=ms<0?'-':'+', abs=Math.abs(ms)/1000;
+  const m=Math.floor(abs/60), s=abs%60;
+  if(m>0) return `${sign}${m}:${s<10?'0':''}${s.toFixed(1)}`;
+  return `${sign}${s.toFixed(1)}s`;
+}
+function pad2(n) { return String(n).padStart(2,'0'); }
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+buildSplits();
+</script>
+</body>
+</html>
